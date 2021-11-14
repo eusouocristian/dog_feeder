@@ -1,35 +1,30 @@
-#import RPi.GPIO as GPIO
-import time
 import tkinter
 from tkinter import messagebox
-from datetime import datetime
 
-# GPIO.setmode(GPIO.BCM)
-# GPIO.setwarnings(False)
-# GPIO.setup(2, GPIO.OUT)
+DEFALUT_GAP = 60 * 25   # 25 min to sec
+DEFALUT_GAP = 10
 
-# while True:
-#     GPIO.output(2, True)
-#     time.sleep(0.01)
-#     GPIO.output(2, False)
-#     time.sleep(0.01)
-
-
-class Dog_feeder:
+class Pymodoro:
     def __init__(self, master):
         self.master = master
         #set de main frame as a white window for the master objetct (root)
         self.mainframe = tkinter.Frame(self.master, bg='white')
         self.mainframe.pack(fill=tkinter.BOTH, expand=True)
-        self.mainframe.winfo_toplevel().title("Alimentador canino automático")
-
-        self.message = tkinter.StringVar()
-        self.message.trace('w', self.write_message)
 
         # create a string variable tu be used inside the Label of build_timer()
-        self.time_now = tkinter.StringVar()
+        self.time_text = tkinter.StringVar()
+
         #reconstroi o timer na janela sempre que a variavel for alterada
-        self.time_now.trace('w', self.build_time)
+        self.time_text.trace('w', self.build_timer)
+
+        # create a int variable to handle the time left
+        self.time_left = tkinter.IntVar()
+
+        #reconstroi o timer na janela sempre que a variavel for alterada
+        self.time_left.trace('w', self.alert)
+
+        # set the value of the variable
+        self.time_left.set(DEFALUT_GAP)
 
         # create a flag to check if the clock is running or not, default is False
         self.running = False
@@ -38,16 +33,15 @@ class Dog_feeder:
         self.build_grid()
         self.build_banner()
         self.build_buttons()
-        self.build_time()
+        self.build_timer()
         self.update()
 
     def build_grid(self):
-        #build 1 column and 4 lines (top, middle, bottom) + message
+        #build 1 column and 3 lines (top, middle, bottom)
         self.mainframe.columnconfigure(0, weight=1)
         self.mainframe.rowconfigure(0, weight=0) # top line
         self.mainframe.rowconfigure(1, weight=1) # middle line
         self.mainframe.rowconfigure(2, weight=0) # bottom line
-        self.mainframe.rowconfigure(3, weight=1) # message line
 
     def build_banner(self):
         # build a banner in the mainframe
@@ -55,7 +49,7 @@ class Dog_feeder:
             self.mainframe,
             bg='red',
             fg='white',
-            text='Alimentador Automático',
+            text='Pymodoro',
             font=('Helvetica', 24)
         )
         # put the banner on the grid
@@ -77,11 +71,11 @@ class Dog_feeder:
         # create buttons itself
         self.start_button = tkinter.Button(
             buttuns_frame, text='Start',
-            command=self.start_callback
+            command=self.start_timer
         )
         self.stop_button = tkinter.Button(
             buttuns_frame, text='Stop',
-            command=self.stop_callback
+            command=self.stop_timer
         )
 
         # set the buttons position
@@ -90,44 +84,57 @@ class Dog_feeder:
         #set the inicial condicion for stop button as DISABLED
         self.stop_button.config(state=tkinter.DISABLED)
 
-    def build_time(self, *args):
-        time = tkinter.Label(
+    def build_timer(self, *args):
+        timer = tkinter.Label(
             self.mainframe,
-            text=self.time_now.get(),
+            text=self.time_text.get(),
             font=('Helvetica', 36),
         )
-        time.grid(row=1, column=0, sticky='nsew')
+        timer.grid(row=1, column=0, sticky='nsew')
 
-    def start_callback(self):
+    def start_timer(self):
+        self.time_left.set(DEFALUT_GAP)
         self.running = True
-        return True
+        #turn able the stop button and disable the start button
+        self.stop_button.config(state=tkinter.NORMAL)
+        self.start_button.config(state=tkinter.DISABLED)
 
-    def stop_callback(self):
+
+    def stop_timer(self):
         self.running = False
-        return True
+        #turn DISABLED the stop button and abled the start button
+        self.stop_button.config(state=tkinter.DISABLED)
+        self.start_button.config(state=tkinter.NORMAL)
 
-    def write_message(self, *args):
-        message = tkinter.Label(
-            self.mainframe,
-            text=self.message.get(),
-            font=('Helvetica, 22'),
-        )
-        message.grid(row=3, column=0, sticky='nsew')
+    def minutes_seconds(self, seconds): #takes the number of seconds
+        return (int(seconds/60), int(seconds%60)) #returns a tuple (min, sec)
 
     def update(self):
-        self.time_now.set(datetime.strftime(datetime.now(), '%H:%M:%S'))
-        if self.running:
-            self.message.set("Alimentando... ")
-            self.stop_button.config(state=tkinter.ACTIVE)
-        else:
-            self.message.set("")
+        # add a new variable to simplify this part
+        time_left = self.time_left.get()
+
+        #if the flag self.running is True and there is time left:
+        if self.running and time_left:
+            # extract the tuple to minuts, seconds from time_left
+            minutes, seconds = self.minutes_seconds(time_left)
+            # set the time_text (to be printed)
+            self.time_text.set('{:0>2}:{:0>2}'.format(minutes, seconds))
+            # set the new time_left
+            self.time_left.set(time_left-1)
+        else: # else, set the time_text as the default time and stop timer
+            minutes, seconds = self.minutes_seconds(DEFALUT_GAP)
+            self.time_text.set('{:0>2}:{:0>2}'.format(minutes, seconds))
+            self.stop_timer()
 
         # method to run self.update after 1000ms
-        self.master.after(500, self.update)
+        self.master.after(1000, self.update)
 
+    def alert(self, *args):
+        if not self.time_left.get():
+            messagebox.showinfo('Timer Done!', 'Your time is done!')
 
 
 if __name__ == '__main__':
     root = tkinter.Tk()
-    Dog_feeder(root)
+    Pymodoro(root)
     root.mainloop()
