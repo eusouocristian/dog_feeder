@@ -1,7 +1,7 @@
 import tkinter
 from tkinter import messagebox
 
-DEFALUT_GAP = 60 * 25   # convert to
+DEFALUT_GAP = 60 * 25   # convert to seconds
 DEFALUT_GAP = 10
 
 class Pymodoro:
