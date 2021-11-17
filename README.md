@@ -1,1 +1,1 @@
-# Dog Feeder Project
+# Dog Feeder Project using Raspberry Pi
