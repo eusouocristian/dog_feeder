@@ -1,16 +1,12 @@
-#import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 import sqlite3
 import tkinter
 from tkinter import messagebox
 from datetime import datetime
 import manage_db
 
-# GPIO.setmode(GPIO.BCM)
-# GPIO.setwarnings(False)
-# GPIO.setup(2, GPIO.OUT)
-
-
-
+STEP_PIN = 21
+DIR_PIN = 20
 TIME_RUN = 10
 BANNER_LINE = 0
 CLOCK_LINE = 1
@@ -18,6 +14,12 @@ PRESETS_LINE = 2
 SAVE_LINE = 3
 BUTTONS_LINE = 4
 MESSAGE_LINE = 5
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+GPIO.setup(STEP_PIN, GPIO.OUT) # step
+GPIO.setup(DIR_PIN, GPIO.OUT) # Direction
+
 
 class Dog_feeder:
     def __init__(self, master):
@@ -46,6 +48,7 @@ class Dog_feeder:
         self.entry3 = tkinter.StringVar()
 
         self.io_level = False
+        self.voltas = 10
 
         # calling the methods created below
         self.build_grid()
@@ -262,16 +265,20 @@ class Dog_feeder:
 
 
     def run_feeder(self):
-        while self.running:
-            if self.io_level:
-                # GPIO.output(2, self.io_level)
-                self.io_level = False
-            else:
-                # GPIO.output(2, self.io_level)
-                self.io_level = True
+        if self.running:
+            steps = self.voltas*(360/1.8)
+            step = 0
+            io_level = True
+            while step < steps:
+                if io_level:
+                    GPIO.output(STEP_PIN, io_level)
+                    io_level = False
+                    step += 1
+                else:
+                    GPIO.output(STEP_PIN, io_level)
+                    io_level = True
 
-
-        self.master.after(100, self.run_feeder)
+        self.master.after(2, self.run_feeder)
 
 
 if __name__ == '__main__':
