@@ -12,8 +12,8 @@ def create_connection(db_file):
 
 def insert_prog(conn, programas):
     with conn:
-        sql = ''' INSERT INTO PROGRAMAS(TimeStamp,P1,P2,P3)
-                VALUES(?,?,?,?) '''
+        sql = '''INSERT INTO PROGRAMAS(TimeStamp,P1,P2,P3,PWM_FREQ, RUNNING_TIME)
+                VALUES(?,?,?,?,?,?) '''
         cur = conn.cursor()
         cur.execute(sql, programas)
         conn.commit()

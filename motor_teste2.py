@@ -1,32 +1,24 @@
 import RPi.GPIO as GPIO
 import time
 
-STEP_PIN = 21
-DIR_PIN = 20
+STEP_PIN = 18
+EN_PIN = 20
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(STEP_PIN, GPIO.OUT) # step
-GPIO.setup(DIR_PIN, GPIO.OUT) # Direction
+GPIO.setup(EN_PIN, GPIO.OUT) # Direction
+GPIO.output(EN_PIN, 0) # Disable output with 1
+pwm0 = GPIO.PWM(STEP_PIN, 1000)
+pwm0.start(50)
 
+io_level = True
 
-def run_steps():
-    
-    while True:
-        voltas = int(input('Voltas: '))
-        steps = voltas*(360/1.8)
-        step = 0
-        io_level = True
-        
-        while step < steps:
-            if io_level:
-                GPIO.output(STEP_PIN, io_level)
-                io_level = False
-                step += 1
-            else:
-                GPIO.output(STEP_PIN, io_level)
-                io_level = True
-                
-            time.sleep(0.005)
-
-run_steps()
+while True:
+	if io_level:
+		GPIO.output(STEP_PIN, io_level)
+		io_level = False
+	else:
+		GPIO.output(STEP_PIN, io_level)
+		io_level = True
+	time.sleep(0.005)
