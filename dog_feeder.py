@@ -5,21 +5,27 @@ from tkinter import messagebox
 from datetime import datetime
 import manage_db
 
-STEP_PIN = 21
-DIR_PIN = 20
+PWM_FREQ = 1000
+STEP_PIN = 18
+EN_PIN = 15
 TIME_RUN = 10
+
 BANNER_LINE = 0
 CLOCK_LINE = 1
-PRESETS_LINE = 2
-SAVE_LINE = 3
-BUTTONS_LINE = 4
-MESSAGE_LINE = 5
+FREQ_LINE = 2
+RT_LINE = 3
+PRESETS_LINE = 4
+SAVE_LINE = 5
+BUTTONS_LINE = 6
+MESSAGE_LINE = 7
+
+DATABASE = 'programas.db'
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(STEP_PIN, GPIO.OUT) # step
-GPIO.setup(DIR_PIN, GPIO.OUT) # Direction
-
+GPIO.setup(EN_PIN, GPIO.OUT) # Enable
+GPIO.output(EN_PIN, 1) # Disable with 1
 
 class Dog_feeder:
     def __init__(self, master):
@@ -35,7 +41,7 @@ class Dog_feeder:
         # create a string variable tu be used inside the Label of build_timer()
         self.time_now = tkinter.StringVar()
         #reconstroi o timer na janela sempre que a variavel for alterada
-        self.time_now.trace('w', self.build_time)
+        self.time_now.trace('w', self.build_clock)
 
         # create a flag to check if the clock is running or not, default is False
         self.running = False
@@ -47,8 +53,12 @@ class Dog_feeder:
         self.entry2 = tkinter.StringVar()
         self.entry3 = tkinter.StringVar()
 
-        self.io_level = False
-        self.voltas = 10
+        self.pwm = GPIO.PWM(STEP_PIN, PWM_FREQ) # Create PWM
+        self.pwm.start(50) # Duty 50%
+        self.freq_entry = tkinter.StringVar()
+        
+        # Value in sec for driving the motor when active
+        self.rt_value = tkinter.StringVar()
 
         # calling the methods created below
         self.build_grid()
@@ -56,11 +66,12 @@ class Dog_feeder:
         self.build_presets()
         self.build_buttons()
         self.build_save_button()
-        self.build_time()
-        self.update_time()
+        self.build_clock()
+        self.update_clock()
         self.update_message()
         self.check_presets()
-        self.run_feeder()
+        self.build_freq()
+        self.build_running_time()
 
     def build_grid(self):
         #build 1 column and 4 lines (top, middle, bottom) + message
@@ -89,8 +100,47 @@ class Dog_feeder:
             padx=10, pady=10
         )
 
+    def build_freq(self):
+        freq_frame = tkinter.Frame(self.mainframe)
+        freq_frame.grid(row=FREQ_LINE, column=0, sticky='we', padx=10, pady=10)
+        freq_frame.columnconfigure(0, weight=0)
+        freq_frame.columnconfigure(1, weight=0)
 
-    def build_time(self, *args):
+        self.preset_freq = tkinter.Entry(freq_frame, textvariable=self.freq_entry, font=('Monospace',12,'normal'), justify='center', width=10)
+
+        padx = 42
+        tkinter.Label(freq_frame, text="Pulsos/seg:", justify='right').grid(row=0, padx=padx)
+
+        padx = 0
+        pady = 10
+        self.preset_freq.grid(row=0, column=1, sticky='nswe', padx=padx, pady=pady)
+
+        prog_from_db = self.get_prog()
+        freq_from_db = prog_from_db[0][5]
+        self.preset_freq.insert(-1, freq_from_db)
+
+
+    def build_running_time(self):
+        rt_frame = tkinter.Frame(self.mainframe)
+        rt_frame.grid(row=RT_LINE, column=0, sticky='we', padx=10, pady=10)
+        rt_frame.columnconfigure(0, weight=0)
+        rt_frame.columnconfigure(1, weight=0)
+
+        self.rt_entry = tkinter.Entry(rt_frame, textvariable=self.rt_value, font=('Monospace',12,'normal'), justify='center', width=10)
+
+        padx = 33
+        tkinter.Label(rt_frame, text="Tempo acion.:", justify='right').grid(row=0, padx=padx)
+
+        padx = 0
+        pady = 0
+        self.rt_entry.grid(row=0, column=1, sticky='nswe', padx=padx, pady=pady)
+
+        prog_from_db = self.get_prog()
+        rt_from_db = prog_from_db[0][6]
+        self.rt_entry.insert(-1, rt_from_db)
+
+
+    def build_clock(self, *args):
         time = tkinter.Label(
             self.mainframe,
             text=self.time_now.get(),
@@ -231,26 +281,30 @@ class Dog_feeder:
         message.grid(row=MESSAGE_LINE, column=0, sticky='nswe')
 
 
-    def update_time(self):
+    def update_clock(self):
         self.time_now.set(datetime.strftime(datetime.now(), '%H:%M:%S'))
-        self.master.after(500, self.update_time)
+        self.master.after(500, self.update_clock)
 
     def update_message(self):
         if self.running:
             self.message.set(f"Alimentando... {self.time_running.get()+1}")
+            self.drive_motor(enable=True)
             self.stop_button.config(state=tkinter.ACTIVE)
         else:
             self.message.set("")
+            self.drive_motor(enable=False)
 
         self.master.after(500, self.update_message)
 
 
     def save_prog(self):
-        conn = manage_db.create_connection("prog_data.db")
+        conn = manage_db.create_connection(DATABASE)
         data_to_insert = [datetime.strftime(datetime.now(), '%d/%m/%Y %H:%M:%S'),
                           self.entry1.get(),
                           self.entry2.get(),
-                          self.entry3.get()
+                          self.entry3.get(),
+                          self.freq_entry.get(),
+                          self.rt_entry.get(),
                           ]
         ids = manage_db.insert_prog(conn, data_to_insert)
         print(ids)
@@ -260,29 +314,19 @@ class Dog_feeder:
 
 
     def get_prog(self):
-        conn = manage_db.create_connection("prog_data.db")
+        conn = manage_db.create_connection(DATABASE)
         return manage_db.get_last_prog(conn)
-
-
-    def run_feeder(self):
-        if self.running:
-            steps = self.voltas*(360/1.8)
-            step = 0
-            io_level = True
-            while step < steps:
-                if io_level:
-                    GPIO.output(STEP_PIN, io_level)
-                    io_level = False
-                    step += 1
-                else:
-                    GPIO.output(STEP_PIN, io_level)
-                    io_level = True
-
-        self.master.after(2, self.run_feeder)
-
+    
+    
+    def drive_motor(self, enable=False):
+        if enable:
+            GPIO.output(EN_PIN, 0) # Disable with 1
+            self.pwm.ChangeFrequency(int(self.freq_entry.get()))
+        else:
+            GPIO.output(EN_PIN, 1) # Disable with 1
 
 if __name__ == '__main__':
     root = tkinter.Tk()
-    root.geometry("400x600")
+    root.geometry("400x700")
     Dog_feeder(root)
     root.mainloop()
