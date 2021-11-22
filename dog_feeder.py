@@ -1,5 +1,4 @@
 import RPi.GPIO as GPIO
-import sqlite3
 import tkinter
 from tkinter import messagebox
 from datetime import datetime
@@ -56,7 +55,7 @@ class Dog_feeder:
         self.pwm = GPIO.PWM(STEP_PIN, PWM_FREQ) # Create PWM
         self.pwm.start(50) # Duty 50%
         self.freq_entry = tkinter.StringVar()
-        
+
         # Value in sec for driving the motor when active
         self.rt_value = tkinter.StringVar()
 
@@ -316,8 +315,8 @@ class Dog_feeder:
     def get_prog(self):
         conn = manage_db.create_connection(DATABASE)
         return manage_db.get_last_prog(conn)
-    
-    
+
+
     def drive_motor(self, enable=False):
         if enable:
             GPIO.output(EN_PIN, 0) # Disable with 1
