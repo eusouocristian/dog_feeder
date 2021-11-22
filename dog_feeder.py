@@ -321,7 +321,10 @@ class Dog_feeder:
         if enable:
             GPIO.output(EN_PIN, 0) # Disable with 1
             # 360 deg / 1.8 deg/step = 200 step / revolution
-            self.pwm.ChangeFrequency(int(self.freq_entry.get()))
+            try:
+                self.pwm.ChangeFrequency(int(self.freq_entry.get()))
+            except ValueError:
+                pass
         else:
             GPIO.output(EN_PIN, 1) # Disable with 1
 
