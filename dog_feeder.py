@@ -18,7 +18,7 @@ SAVE_LINE = 5
 BUTTONS_LINE = 6
 MESSAGE_LINE = 7
 
-DATABASE = 'programas.db'
+DATABASE = '/home/pi/dog_feeder/programas.db'
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
