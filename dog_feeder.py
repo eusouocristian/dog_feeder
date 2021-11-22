@@ -287,7 +287,7 @@ class Dog_feeder:
 
     def update_message(self):
         if self.running:
-            self.message.set(f"Alimentando... {self.time_running.get()+1}")
+            self.message.set("Alimentando...")
             self.drive_motor(enable=True)
             self.stop_button.config(state=tkinter.ACTIVE)
         else:
@@ -321,6 +321,7 @@ class Dog_feeder:
     def drive_motor(self, enable=False):
         if enable:
             GPIO.output(EN_PIN, 0) # Disable with 1
+            # 360 deg / 1.8 deg/step = 200 step / revolution
             self.pwm.ChangeFrequency(int(self.freq_entry.get()))
         else:
             GPIO.output(EN_PIN, 1) # Disable with 1
