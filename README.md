@@ -22,3 +22,20 @@ Using the GUI, it is possible to schedule three programs for automatic feeding a
 A start/stop buttons can also be used to manually use the feeder. All programs are maintained in a Sqlite databank. There is a button to register the program into the dataabe. The last registered program remain active for the next app launch.S
 
 ![image](/static/dog_feeder_gui2.png)
+
+Instructions to handle autostarting this project on a Raspberry Pi (Raspbian):
+Install xtem:
+
+    sudo apt install xterm
+
+Create a desktop file:
+
+    mkdir -p ~/.config/autostart/dog_feeder.desktop
+
+Content:
+
+    [Desktop Entry]
+    Type=Application
+    Name=Dog Feeder
+    Exec=xterm -hold -e '/usr/bin/python3 /home/pi/dog_feeder/dog_feeder.py'
+
