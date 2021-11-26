@@ -39,3 +39,6 @@ Content:
     Name=Dog Feeder
     Exec=xterm -hold -e '/usr/bin/python3 /home/pi/dog_feeder/dog_feeder.py'
 
+## Electrical Schematic
+
+![Imagem](/static/electrical_scheme.png)
