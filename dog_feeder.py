@@ -218,11 +218,15 @@ class Dog_feeder:
                 # Check if the preset is equal to current time (hour and minute), so run start_callback
                 if entry1_datetime.hour == now.hour and entry1_datetime.minute == now.minute:
                     self.start_callback()
+                    if now.second == 0:
+                        self.save_data_exec(status="Started") 
                     time_left = self.time_running.get()
                     self.time_running.set(time_left-1)
                     # time_running decreases continuously, so stop_callback when it crosses the zero
                     if self.time_running.get() < 0:
                         self.stop_callback()
+                    if self.time_running.get() == -1:
+                        self.save_data_exec(status="Stopped")
                     # When it crosses the next minute, it reset the counter
                     if self.time_running.get() == -60 + TIME_RUN:
                         self.time_running.set(TIME_RUN)
@@ -234,11 +238,15 @@ class Dog_feeder:
                 # Check if the preset is equal to current time (hour and minute), so run start_callback
                 if entry2_datetime.hour == now.hour and entry2_datetime.minute == now.minute:
                     self.start_callback()
+                    if now.second == 0:
+                        self.save_data_exec(status="Started") 
                     time_left = self.time_running.get()
                     self.time_running.set(time_left-1)
                     # time_running decreases continuously, so stop_callback when it crosses the zero
                     if self.time_running.get() < 0:
                         self.stop_callback()
+                    if self.time_running.get() == -1:
+                        self.save_data_exec(status="Stopped")
                     # When it crosses the next minute, it reset the counter
                     if self.time_running.get() == -60 + TIME_RUN:
                         self.time_running.set(TIME_RUN)
@@ -250,11 +258,15 @@ class Dog_feeder:
                 # Check if the preset is equal to current time (hour and minute), so run start_callback
                 if entry3_datetime.hour == now.hour and entry3_datetime.minute == now.minute:
                     self.start_callback()
+                    if now.second == 0:
+                        self.save_data_exec(status="Started") 
                     time_left = self.time_running.get()
                     self.time_running.set(time_left-1)
                     # time_running decreases continuously, so stop_callback when it crosses the zero
                     if self.time_running.get() < 0:
                         self.stop_callback()
+                    if self.time_running.get() == -1:
+                        self.save_data_exec(status="Stopped")
                     # When it crosses the next minute, it reset the counter
                     if self.time_running.get() == -60 + TIME_RUN:
                         self.time_running.set(TIME_RUN)
@@ -266,10 +278,10 @@ class Dog_feeder:
 
     def start_callback(self):
         self.running = True
-
+    
     def stop_callback(self):
         self.running = False
-
+ 
 
     def write_message(self, *args):
         message = tkinter.Label(
@@ -310,6 +322,16 @@ class Dog_feeder:
         if ids:
             messagebox.showinfo('Sucesso', 'Dados de programação salvos com sucesso!')
         return ids
+
+
+    def save_data_exec(self, status=None):
+        conn = manage_db.create_connection(DATABASE)
+        data_to_insert = [datetime.strftime(datetime.now(), '%d/%m/%Y %H:%M:%S'),
+                          status,
+                          self.freq_entry.get(),
+                          ]
+        ids = manage_db.insert_exec(conn, data_to_insert)
+
 
 
     def get_prog(self):

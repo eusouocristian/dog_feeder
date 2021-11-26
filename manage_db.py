@@ -20,6 +20,16 @@ def insert_prog(conn, programas):
         # Return ID
         return cur.lastrowid
 
+def insert_exec(conn, dados):
+    with conn:
+        sql = '''INSERT INTO EXECUTADO(TimeStamp,Status,Frequencia)
+                VALUES(?,?,?) '''
+        cur = conn.cursor()
+        cur.execute(sql, dados)
+        conn.commit()
+        # Return ID
+        return cur.lastrowid
+
 def get_last_prog(conn):
     with conn:
         cur = conn.cursor()
