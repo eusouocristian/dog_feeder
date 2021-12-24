@@ -33,8 +33,8 @@ def insert_exec(conn, dados):
 def get_last_prog(conn):
     with conn:
         cur = conn.cursor()
-        cur.execute("SELECT * FROM PROGRAMAS \
-                    ORDER BY TimeStamp DESC \
-                    LIMIT 1;")
+        cur.execute('''SELECT * FROM PROGRAMAS
+                    ORDER BY ID DESC
+                    LIMIT 1;''')
         output = cur.fetchall()
         return output
