@@ -215,51 +215,15 @@ class Dog_feeder:
             if len(self.entry1.get()) == 5:
                 # Convert the string from the input for datetime format
                 entry1_datetime = datetime.strptime(self.entry1.get(), "%H:%M")
-                # Check if the preset is equal to current time (hour and minute), so run start_callback
-                if entry1_datetime.hour == now.hour and entry1_datetime.minute == now.minute:
-                    self.start_callback()
-                    if now.second == 0:
-                        self.save_data_exec(status="Started") 
-                    time_left = self.time_running.get()
-                    self.time_running.set(time_left-1)
-                    # time_running decreases continuously, so stop_callback when it crosses the zero
-                    if self.time_running.get() < 0:
-                        self.stop_callback()
-                    if self.time_running.get() == -1:
-                        self.save_data_exec(status="Stopped")
-                    # When it crosses the next minute, it reset the counter
-                    if self.time_running.get() == -60 + TIME_RUN:
-                        self.time_running.set(TIME_RUN)
-
-            # Check is all 5 digits were typed =>  12 : 00
-            if len(self.entry2.get()) == 5:
-                # Convert the string from the input for datetime format
                 entry2_datetime = datetime.strptime(self.entry2.get(), "%H:%M")
-                # Check if the preset is equal to current time (hour and minute), so run start_callback
-                if entry2_datetime.hour == now.hour and entry2_datetime.minute == now.minute:
-                    self.start_callback()
-                    if now.second == 0:
-                        self.save_data_exec(status="Started") 
-                    time_left = self.time_running.get()
-                    self.time_running.set(time_left-1)
-                    # time_running decreases continuously, so stop_callback when it crosses the zero
-                    if self.time_running.get() < 0:
-                        self.stop_callback()
-                    if self.time_running.get() == -1:
-                        self.save_data_exec(status="Stopped")
-                    # When it crosses the next minute, it reset the counter
-                    if self.time_running.get() == -60 + TIME_RUN:
-                        self.time_running.set(TIME_RUN)
-
-            # Check is all 5 digits were typed =>  12 : 00
-            if len(self.entry3.get()) == 5:
-                # Convert the string from the input for datetime format
                 entry3_datetime = datetime.strptime(self.entry3.get(), "%H:%M")
                 # Check if the preset is equal to current time (hour and minute), so run start_callback
-                if entry3_datetime.hour == now.hour and entry3_datetime.minute == now.minute:
+                if (entry1_datetime.hour == now.hour and entry1_datetime.minute == now.minute) or \
+                   (entry2_datetime.hour == now.hour and entry2_datetime.minute == now.minute) or \
+                   (entry3_datetime.hour == now.hour and entry3_datetime.minute == now.minute):
                     self.start_callback()
                     if now.second == 0:
-                        self.save_data_exec(status="Started") 
+                        self.save_data_exec(status="Started")
                     time_left = self.time_running.get()
                     self.time_running.set(time_left-1)
                     # time_running decreases continuously, so stop_callback when it crosses the zero
@@ -278,10 +242,10 @@ class Dog_feeder:
 
     def start_callback(self):
         self.running = True
-    
+
     def stop_callback(self):
         self.running = False
- 
+
 
     def write_message(self, *args):
         message = tkinter.Label(
